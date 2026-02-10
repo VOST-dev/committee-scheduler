@@ -42,6 +42,56 @@ async function getExistingData(
 }
 
 /**
+ * メインデータシートが存在するか確認し、なければ作成
+ */
+async function ensureMainSheetExists(
+	sheets: ReturnType<typeof google.sheets>,
+	sheetName: string,
+): Promise<void> {
+	try {
+		const response = await sheets.spreadsheets.get({
+			spreadsheetId: getSpreadsheetId(),
+		});
+
+		const sheetExists = response.data.sheets?.some(
+			(sheet) => sheet.properties?.title === sheetName,
+		);
+
+		if (!sheetExists) {
+			// シートを作成
+			await sheets.spreadsheets.batchUpdate({
+				spreadsheetId: getSpreadsheetId(),
+				requestBody: {
+					requests: [
+						{
+							addSheet: {
+								properties: {
+									title: sheetName,
+								},
+							},
+						},
+					],
+				},
+			});
+
+			// ヘッダー行を追加
+			await sheets.spreadsheets.values.update({
+				spreadsheetId: getSpreadsheetId(),
+				range: `${sheetName}!A1:E1`,
+				valueInputOption: "RAW",
+				requestBody: {
+					values: [["審議会名", "開催日", "開催時間", "議題", "詳細URL"]],
+				},
+			});
+
+			console.log(`Created main data sheet: ${sheetName}`);
+		}
+	} catch (error) {
+		console.error("Failed to ensure main sheet exists:", error);
+	}
+}
+
+/**
  * 会議データをスプレッドシートに更新/挿入
  * URLをキーに既存データを更新、新規の場合は追加
  */
@@ -53,6 +103,9 @@ export async function upsertMeetings(
 	inserted: number;
 }> {
 	const sheets = await getSheetsClient();
+
+	// メインデータシートの存在確認
+	await ensureMainSheetExists(sheets, sheetName);
 
 	// 既存データを取得
 	const existingData = await getExistingData(sheets, sheetName);
