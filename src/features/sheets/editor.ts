@@ -12,8 +12,14 @@ function getSpreadsheetId() {
  * Google Sheets APIクライアントを取得
  */
 async function getSheetsClient() {
+	const subject = process.env.GOOGLE_IMPERSONATE_SUBJECT;
+	if (!subject) {
+		throw new Error("GOOGLE_IMPERSONATE_SUBJECT is not set");
+	}
+
 	const auth = new google.auth.GoogleAuth({
 		scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+		clientOptions: { subject },
 	});
 
 	const authClient = await auth.getClient();

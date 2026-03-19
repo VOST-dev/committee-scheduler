@@ -29,6 +29,13 @@ bun install
 2. サービスアカウントのメールアドレスに編集権限を付与
 3. `mise.toml` 内の `SPREADSHEET_ID` を更新
 
+### 4. Google Workspaceの設定
+
+1. [ドメイン全体の委任](https://developers.google.com/identity/protocols/oauth2/service-account?hl=ja#delegatingauthority) から、サービスアカウントのクライアントIDを設定
+2. OAuthスコープに以下を設定
+  - https://www.googleapis.com/auth/spreadsheets
+  - https://www.googleapis.com/auth/drive
+
 ## 実行方法
 
 ### 手動実行
